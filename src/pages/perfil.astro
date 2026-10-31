@@ -2,6 +2,7 @@
 import Tienda from '../layouts/Tienda.astro'
 import { supabase } from '../lib/supabase'
 import { getClienteById } from '../lib/clientes'
+import { getFacturasByCliente } from '../lib/facturas'
 
 const accessToken = Astro.cookies.get('sb-access-token')
 const refreshToken = Astro.cookies.get('sb-refresh-token')
@@ -25,6 +26,7 @@ if (!data.user) {
 
 email = data.user.email ?? ''
 const cliente = await getClienteById(data.user.id)
+const facturas = await getFacturasByCliente(data.user.id)
 
 if (cliente) {
   nombre = [cliente.nombres_cliente, cliente.apellido1_cliente, cliente.apellido2_cliente]
@@ -71,5 +73,27 @@ if (cliente) {
         Guardar Registro
       </button>
     </form>
+
+    {facturas.length > 0 && (
+      <section class="mt-12 border-t border-neutral-200 pt-8">
+        <h2 class="text-center text-lg font-light text-miora">Mis facturas</h2>
+        <ul class="mt-4 space-y-2">
+          {facturas.map((f) => {
+            const fecha = new Date(f.fecha_compra).toLocaleDateString('es-ES')
+            return (
+              <li>
+                <a
+                  href={`/factura/${f.pk_factura}`}
+                  class="flex items-center justify-between border border-neutral-200 px-4 py-3 text-sm hover:bg-neutral-50"
+                >
+                  <span>Factura nº {f.pk_factura}</span>
+                  <span class="text-neutral-500">{fecha}</span>
+                </a>
+              </li>
+            )
+          })}
+        </ul>
+      </section>
+    )}
   </main>
 </Tienda>

@@ -68,6 +68,21 @@ export async function crearFactura(datos: FacturaNueva): Promise<Factura | null>
           linea.iva ?? 21,
         ],
       )
+
+      const stock = await cliente.query(
+        `UPDATE productos
+         SET stock = stock - $1
+         WHERE pk_producto = $2
+           AND stock >= $1
+         RETURNING stock`,
+        [linea.cantidad, linea.fkProducto],
+      )
+
+      if (stock.rowCount === 0) {
+        throw new Error(
+          `Stock insuficiente para el producto ${linea.fkProducto}`,
+        )
+      }
     }
 
     await cliente.query('COMMIT')
@@ -79,6 +94,10 @@ export async function crearFactura(datos: FacturaNueva): Promise<Factura | null>
   } finally {
     cliente.release()
   }
+}
+
+export interface LineaDetalleConNombre extends LineaDetalle {
+  nombre_producto: string
 }
 
 export async function getFactura(pkFactura: number): Promise<{
@@ -111,5 +130,73 @@ export async function getFactura(pkFactura: number): Promise<{
   } catch (error) {
     console.error('Error consultando factura:', error)
     return null
+  }
+}
+
+export async function getFacturaConLineas(pkFactura: number): Promise<{
+  factura: Factura
+  lineas: LineaDetalleConNombre[]
+} | null> {
+  try {
+    const { rows: facturas } = await pool.query<Factura>(
+      `SELECT pk_factura, fk_cliente, fecha_compra, stripe_payment_intent_id, iva
+       FROM facturas
+       WHERE pk_factura = $1`,
+      [pkFactura],
+    )
+
+    const factura = facturas[0]
+    if (!factura) {
+      return null
+    }
+
+    const { rows: lineas } = await pool.query<LineaDetalleConNombre>(
+      `SELECT d.fk_factura, d.fk_producto, d.cantidad, d.precio_unitario,
+              d.precio_total, d.descuento, d.iva,
+              p.nombre_producto
+       FROM detalle_factura d
+       JOIN productos p ON p.pk_producto = d.fk_producto
+       WHERE d.fk_factura = $1
+       ORDER BY d.fk_producto ASC`,
+      [pkFactura],
+    )
+
+    return { factura, lineas }
+  } catch (error) {
+    console.error('Error consultando factura con líneas:', error)
+    return null
+  }
+}
+
+export async function getPkFacturaPorPaymentIntent(
+  paymentIntentId: string,
+): Promise<number | null> {
+  try {
+    const { rows } = await pool.query<{ pk_factura: number }>(
+      `SELECT pk_factura
+       FROM facturas
+       WHERE stripe_payment_intent_id = $1`,
+      [paymentIntentId],
+    )
+    return rows[0]?.pk_factura ?? null
+  } catch (error) {
+    console.error('Error buscando factura por payment intent:', error)
+    return null
+  }
+}
+
+export async function getFacturasByCliente(fkCliente: string): Promise<Factura[]> {
+  try {
+    const { rows } = await pool.query<Factura>(
+      `SELECT pk_factura, fk_cliente, fecha_compra, stripe_payment_intent_id, iva
+       FROM facturas
+       WHERE fk_cliente = $1
+       ORDER BY fecha_compra DESC`,
+      [fkCliente],
+    )
+    return rows
+  } catch (error) {
+    console.error('Error listando facturas del cliente:', error)
+    return []
   }
 }

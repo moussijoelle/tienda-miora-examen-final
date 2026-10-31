@@ -1,0 +1,182 @@
+---
+import Tienda from '../../layouts/Tienda.astro'
+import { supabase } from '../../lib/supabase'
+import { getClienteById } from '../../lib/clientes'
+import { getFacturaConLineas } from '../../lib/facturas'
+
+export const prerender = false
+
+const accessToken = Astro.cookies.get('sb-access-token')
+const refreshToken = Astro.cookies.get('sb-refresh-token')
+
+if (!accessToken || !refreshToken) {
+  return Astro.redirect(`/login?next=${encodeURIComponent(Astro.url.pathname)}`)
+}
+
+const { data } = await supabase.auth.setSession({
+  access_token: accessToken.value,
+  refresh_token: refreshToken.value,
+})
+
+if (!data.user) {
+  return Astro.redirect(`/login?next=${encodeURIComponent(Astro.url.pathname)}`)
+}
+
+const pkFactura = Number(Astro.params.id)
+if (!Number.isFinite(pkFactura) || pkFactura <= 0) {
+  return Astro.redirect('/')
+}
+
+const detalle = await getFacturaConLineas(pkFactura)
+if (!detalle) {
+  return Astro.redirect('/')
+}
+
+if (detalle.factura.fk_cliente !== data.user.id) {
+  return Astro.redirect('/perfil')
+}
+
+const cliente = await getClienteById(detalle.factura.fk_cliente)
+const nombreCliente = cliente
+  ? [cliente.nombres_cliente, cliente.apellido1_cliente, cliente.apellido2_cliente]
+      .filter(Boolean)
+      .join(' ')
+  : data.user.email ?? ''
+
+const fecha = new Date(detalle.factura.fecha_compra)
+const fechaTexto = fecha.toLocaleDateString('es-ES', {
+  day: '2-digit',
+  month: 'long',
+  year: 'numeric',
+})
+
+const total = detalle.lineas.reduce(
+  (suma, linea) => suma + Number(linea.precio_total),
+  0,
+)
+const ivaPct = Number(detalle.factura.iva)
+const base = total / (1 + ivaPct / 100)
+const cuotaIva = total - base
+
+function euros(n: number) {
+  return n.toFixed(2).replace('.', ',') + ' €'
+}
+---
+
+<Tienda titulo={`Factura ${detalle.factura.pk_factura} — Miora`}>
+  <div class="mx-auto max-w-3xl px-4 py-10">
+    <div class="no-print mb-6 flex flex-wrap items-center justify-between gap-3">
+      <a href="/perfil" class="text-sm text-neutral-500 hover:text-neutral-800">
+        ← Volver al perfil
+      </a>
+      <button
+        type="button"
+        id="btn-imprimir"
+        class="bg-neutral-800 px-5 py-2.5 text-sm text-white hover:bg-neutral-700"
+      >
+        Imprimir factura
+      </button>
+    </div>
+
+    <article class="border border-neutral-200 bg-white p-8 print:border-0 print:p-0">
+      <div class="flex flex-wrap items-start justify-between gap-4 border-b border-neutral-200 pb-6">
+        <div>
+          <p class="text-2xl font-light tracking-wide text-miora">Miora</p>
+          <p class="mt-1 text-sm text-neutral-500">Passeig de Gràcia 92, Barcelona</p>
+          <p class="text-sm text-neutral-500">hola@miora.com</p>
+        </div>
+        <div class="text-right text-sm">
+          <p class="text-lg font-medium">Factura nº {detalle.factura.pk_factura}</p>
+          <p class="mt-1 text-neutral-500">{fechaTexto}</p>
+        </div>
+      </div>
+
+      <section class="mt-6 grid gap-4 text-sm sm:grid-cols-2">
+        <div>
+          <p class="text-xs uppercase tracking-wide text-neutral-400">Cliente</p>
+          <p class="mt-1 font-medium">{nombreCliente}</p>
+          {cliente && <p class="text-neutral-600">{cliente.email}</p>}
+          {cliente?.telefono_movil && (
+            <p class="text-neutral-600">{cliente.telefono_movil}</p>
+          )}
+        </div>
+        <div class="sm:text-right">
+          <p class="text-xs uppercase tracking-wide text-neutral-400">Pago</p>
+          <p class="mt-1 text-neutral-600">Stripe</p>
+          <p class="break-all text-xs text-neutral-400">
+            {detalle.factura.stripe_payment_intent_id}
+          </p>
+        </div>
+      </section>
+
+      <div class="mt-8 overflow-x-auto">
+        <table class="w-full min-w-[28rem] text-left text-sm">
+          <thead>
+            <tr class="border-b border-neutral-300 text-xs uppercase tracking-wide text-neutral-500">
+              <th class="pb-2 font-medium">Producto</th>
+              <th class="pb-2 text-right font-medium">Cant.</th>
+              <th class="pb-2 text-right font-medium">Precio</th>
+              <th class="pb-2 text-right font-medium">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {detalle.lineas.map((linea) => (
+              <tr class="border-b border-neutral-100">
+                <td class="py-3 pr-2">{linea.nombre_producto}</td>
+                <td class="py-3 text-right">{linea.cantidad}</td>
+                <td class="py-3 text-right">{euros(Number(linea.precio_unitario))}</td>
+                <td class="py-3 text-right">{euros(Number(linea.precio_total))}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="mt-6 ml-auto max-w-xs space-y-1 text-sm">
+        <div class="flex justify-between text-neutral-600">
+          <span>Base imponible</span>
+          <span>{euros(base)}</span>
+        </div>
+        <div class="flex justify-between text-neutral-600">
+          <span>IVA ({ivaPct} %)</span>
+          <span>{euros(cuotaIva)}</span>
+        </div>
+        <div class="flex justify-between border-t border-neutral-300 pt-2 text-base font-medium">
+          <span>Total</span>
+          <span>{euros(total)}</span>
+        </div>
+      </div>
+
+      <p class="mt-10 text-center text-xs text-neutral-400">
+        Gracias por tu compra en Miora.
+      </p>
+    </article>
+  </div>
+</Tienda>
+
+<style is:global>
+  @media print {
+    .fondo-madera,
+    header,
+    aside,
+    footer,
+    .no-print {
+      display: none !important;
+    }
+
+    body {
+      background: white !important;
+    }
+
+    main {
+      max-width: none !important;
+      padding: 0 !important;
+    }
+  }
+</style>
+
+<script>
+  document.getElementById('btn-imprimir')?.addEventListener('click', () => {
+    window.print()
+  })
+</script>

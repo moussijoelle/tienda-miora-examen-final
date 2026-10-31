@@ -22,6 +22,8 @@ function partirNombre(nombreCompleto: string) {
 export const POST: APIRoute = async ({ request, cookies, redirect }) => {
   const formData = await request.formData()
   const nombre = formData.get('nombre')?.toString() || ''
+  const nombresCampo = formData.get('nombres')?.toString()?.trim() || ''
+  const apellido1Campo = formData.get('apellido1')?.toString()?.trim() || ''
   const telefono = formData.get('telefono')?.toString() || ''
   const enviarBrevo = formData.get('enviar-brevo')?.toString() === 'true'
 
@@ -44,7 +46,14 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
     return new Response('Sesión inválida', { status: 401 })
   }
 
-  const { nombres, apellido1, razonSocial } = partirNombre(nombre)
+  const { nombres, apellido1, razonSocial } =
+    nombresCampo && apellido1Campo
+      ? {
+          nombres: nombresCampo,
+          apellido1: apellido1Campo,
+          razonSocial: `${nombresCampo} ${apellido1Campo}`.trim(),
+        }
+      : partirNombre(nombre)
 
   const textQuery = `
     INSERT INTO clientes (
