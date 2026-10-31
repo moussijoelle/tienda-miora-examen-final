@@ -1,0 +1,96 @@
+---
+import { getCategorias, type Categoria } from '../lib/categorias'
+import EnlacesContacto from './EnlacesContacto.astro'
+
+interface Props {
+  sobreFoto?: boolean
+}
+
+const { sobreFoto = false } = Astro.props
+
+const categorias: Categoria[] = await getCategorias()
+const ruta = Astro.url.pathname
+
+const clasesEnlace = (activa: boolean) =>
+  ['block py-1.5', 'hover:opacity-80', activa && 'font-medium underline underline-offset-4']
+---
+
+<div class:list={['md:w-48 md:shrink-0 md:self-stretch', !sobreFoto && 'fondo-madera']}>
+  <nav
+    class:list={[
+      'hidden px-6 py-8 text-sm text-white md:block',
+      sobreFoto && '[text-shadow:0_1px_12px_rgb(0_0_0_/_40%)]',
+    ]}
+    aria-label="Categorías"
+  >
+    <h2 class="mb-5 text-xs font-normal tracking-[0.2em] uppercase text-white/70">Elige estilo</h2>
+
+    <ul class="space-y-1">
+      {categorias.map((cat) => {
+        const activa = ruta === `/categoria/${cat.pk_categoria}`
+        return (
+          <li>
+            <a href={`/categoria/${cat.pk_categoria}`} class:list={clasesEnlace(activa)}>
+              {cat.nom_categoria}
+            </a>
+          </li>
+        )
+      })}
+    </ul>
+
+    <address class="mt-8 text-xs leading-relaxed text-white/80 not-italic">
+      Passeig de Gràcia 92<br />Barcelona
+    </address>
+    <EnlacesContacto class="mt-3" />
+  </nav>
+
+  <div
+    id="menu-categorias-movil"
+    class="fixed inset-0 z-50 hidden md:hidden"
+    role="dialog"
+    aria-modal="true"
+    aria-hidden="true"
+    aria-labelledby="titulo-categorias-movil"
+  >
+    <button
+      type="button"
+      class="absolute inset-0 bg-black/40"
+      data-cerrar-categorias
+      tabindex="-1"
+      aria-label="Cerrar categorías"
+    ></button>
+    <nav
+      class="fondo-madera relative z-10 flex h-full w-64 max-w-[80vw] flex-col overflow-y-auto px-6 py-8 text-sm text-white"
+      aria-label="Categorías"
+    >
+      <div class="mb-5 flex items-start justify-between gap-4">
+        <h2 id="titulo-categorias-movil" class="text-xs font-normal tracking-[0.2em] uppercase text-white/70">
+          Elige estilo
+        </h2>
+        <button type="button" class="shrink-0 hover:opacity-70" data-cerrar-categorias aria-label="Cerrar categorías">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18" />
+          </svg>
+        </button>
+      </div>
+      <ul class="space-y-1">
+        {categorias.map((cat) => {
+          const activa = ruta === `/categoria/${cat.pk_categoria}`
+          return (
+            <li>
+              <a href={`/categoria/${cat.pk_categoria}`} class:list={clasesEnlace(activa)}>
+                {cat.nom_categoria}
+              </a>
+            </li>
+          )
+        })}
+      </ul>
+      <div class="mt-auto pt-8">
+        <address class="text-xs leading-relaxed text-white/80 not-italic">
+          Passeig de Gràcia 92<br />Barcelona
+        </address>
+        <EnlacesContacto class="mt-3" />
+      </div>
+    </nav>
+  </div>
+</div>

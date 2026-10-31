@@ -1,0 +1,378 @@
+---
+import '../styles/global.css'
+import MenuCategorias from '../components/MenuCategorias.astro'
+import { supabase } from '../lib/supabase'
+
+const accessToken = Astro.cookies.get('sb-access-token')
+const refreshToken = Astro.cookies.get('sb-refresh-token')
+let nombreUsuario: string | null = null
+if (accessToken && refreshToken) {
+  const { data } = await supabase.auth.setSession({
+    access_token: accessToken.value,
+    refresh_token: refreshToken.value,
+  })
+  if (data.user) {
+    nombreUsuario =
+      data.user.user_metadata?.full_name ||
+      data.user.user_metadata?.nombre ||
+      data.user.email ||
+      null
+  } else {
+    console.log('No se pudo recuperar el usuario.')
+  }
+}
+const textoUsuario = nombreUsuario ? `Hola, ${nombreUsuario}` : 'Iniciar sesión'
+
+interface Props {
+  titulo?: string
+  portada?: boolean
+}
+
+const { titulo = 'Miora — vestidos de mujer', portada = false } = Astro.props
+const ruta = Astro.url.pathname
+const consulta = Astro.url.searchParams.get('q') ?? ''
+
+const paginas = [
+  { href: '/', nombre: 'Inicio' },
+  { href: '/rebajas', nombre: 'Rebajas' },
+  { href: '/nosotros', nombre: 'Nosotros' },
+]
+---
+
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{titulo}</title>
+    <link rel="icon" href="/logo-miora.png" />
+  </head>
+  <body class="min-h-screen bg-white font-sans text-neutral-800">
+    <div class:list={[portada && 'relative']}>
+      {portada && (
+        <img
+          src="/hero-vestido.jpg"
+          alt="Mujer con vestido verde Miora"
+          class="h-dvh min-h-dvh w-full object-cover object-[72%_center] md:h-auto md:min-h-0 md:object-center"
+        />
+      )}
+      {portada && <div class="pointer-events-none absolute inset-0 bg-black/15" />}
+
+      <div class:list={[portada ? 'absolute inset-0 flex flex-col' : 'flex min-h-screen flex-col']}>
+        <p
+          class:list={[
+            'px-4 py-2 text-center text-xs tracking-wide text-white',
+            !portada && 'fondo-madera',
+          ]}
+        >
+          Vestidos de mujer · mi hora
+        </p>
+
+        <header class:list={[portada ? 'text-white' : 'fondo-madera text-white']}>
+          <div class="flex w-full items-center md:flex-row">
+            <div class="flex w-auto shrink-0 items-center gap-2 px-4 py-4 md:w-48 md:px-6">
+              <button
+                type="button"
+                id="btn-categorias"
+                class="shrink-0 md:hidden"
+                aria-expanded="false"
+                aria-controls="menu-categorias-movil"
+                aria-label="Abrir categorías"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M4 12h16M4 17h16" />
+                </svg>
+              </button>
+              <a href="/" class="shrink-0">
+                <img
+                  src="/logo-miora.png"
+                  alt="Miora"
+                  class="h-9 w-auto max-w-[5.5rem] object-contain object-left brightness-0 invert sm:h-11 sm:max-w-[7rem] md:h-12 md:max-w-none"
+                />
+              </a>
+            </div>
+
+            <div class="flex min-w-0 flex-1 items-center gap-3 px-2 py-4 sm:gap-5 sm:px-6 md:px-8">
+              <form action="/buscar" method="get" role="search" class="w-24 shrink sm:w-44 md:w-52">
+                <label class="flex items-center border border-white/45 bg-white/15">
+                  <span class="sr-only">Buscar vestidos</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="ml-2 h-4 w-4 shrink-0 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 100-15 7.5 7.5 0 000 15z" />
+                  </svg>
+                  <input
+                    type="search"
+                    name="q"
+                    size="1"
+                    value={consulta}
+                    placeholder="Buscar vestidos…"
+                    autocomplete="off"
+                    class="min-w-0 flex-1 bg-transparent px-2 py-1.5 text-sm text-white placeholder:text-white/70 outline-none"
+                  />
+                </label>
+              </form>
+
+              <div class="flex min-w-0 flex-1 items-center justify-center gap-4 sm:gap-5 md:gap-6">
+                <nav class="hidden items-center gap-5 text-sm tracking-wide md:flex lg:gap-6" aria-label="Principal">
+                  {paginas.map((p) => (
+                    <a
+                      href={p.href}
+                      class:list={['hover:opacity-70', ruta === p.href && 'underline underline-offset-4']}
+                    >
+                      {p.nombre}
+                    </a>
+                  ))}
+                </nav>
+
+                <div class="hidden items-center gap-1.5 sm:flex sm:gap-2">
+                  <a href="/login" class="hover:opacity-70" aria-label="Mi cuenta">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 19.5a7.5 7.5 0 0115 0" />
+                    </svg>
+                  </a>
+                  <span class="hidden flex-col text-[11px] leading-tight sm:flex">
+                    <a href="/login" class="hover:opacity-70">
+                      <span id="usuario">{textoUsuario}</span>
+                    </a>
+                  </span>
+                </div>
+                <a
+                  href="/perfil"
+                  class="hidden border border-white/50 px-3 py-1.5 text-xs tracking-wide hover:bg-white/10 sm:inline-block"
+                >
+                  Perfil
+                </a>
+                <a href="/favoritos" class="relative hover:opacity-70" aria-label="Favoritos">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                  </svg>
+                  <span
+                    id="cuenta-favoritos"
+                    class="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-white text-[11px] font-semibold text-neutral-900"
+                  >
+                    0
+                  </span>
+                </a>
+                <a href="/carrito" class="relative hover:opacity-70" aria-label="Cesta">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l-1 11H6L5 9z" />
+                  </svg>
+                  <span
+                    id="cuenta-cesta"
+                    class="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-white text-[11px] font-semibold text-neutral-900"
+                  >
+                    0
+                  </span>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <nav class="flex flex-wrap justify-center gap-x-4 gap-y-1 px-4 py-2 text-xs md:hidden" aria-label="Principal móvil">
+            {paginas.map((p) => (
+              <a href={p.href} class:list={[ruta === p.href && 'underline']}>
+                {p.nombre}
+              </a>
+            ))}
+          </nav>
+        </header>
+
+        <div class="flex min-h-0 flex-1 flex-col md:flex-row">
+          <aside aria-label="Categorías de vestidos">
+            <MenuCategorias sobreFoto={portada} />
+          </aside>
+          <main class:list={['min-w-0 flex-1', portada && 'text-white']}>
+            <slot />
+          </main>
+        </div>
+      </div>
+    </div>
+
+    <footer class="border-t border-neutral-200 bg-neutral-100 text-neutral-800">
+      <div class="grid w-full grid-cols-1 gap-10 px-10 py-10 sm:px-12 md:grid-cols-[12rem_1fr_14rem] md:items-start md:gap-8 md:px-14 lg:gap-12 lg:px-20">
+        <section aria-labelledby="titulo-donde-estamos">
+          <h2 id="titulo-donde-estamos" class="text-sm font-semibold">Dónde estamos</h2>
+          <address class="mt-2 text-sm leading-relaxed not-italic">
+            Visita nuestra tienda física<br />
+            en Passeig de Gràcia 92,<br />
+            Barcelona.
+          </address>
+          <a
+            href="mailto:hola@miora.com"
+            class="mt-2 inline-block text-sm font-medium underline underline-offset-4 hover:opacity-70"
+          >
+            hola@miora.com
+          </a>
+        </section>
+
+        <figure class="mx-auto w-full max-w-sm justify-self-center">
+          <iframe
+            title="Mapa de Miora en Passeig de Gràcia 92, Barcelona"
+            src="https://maps.google.com/maps?q=Passeig+de+Gr%C3%A0cia+92+Barcelona&output=embed"
+            class="h-36 w-full border border-neutral-300 bg-white"
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+          ></iframe>
+          <figcaption class="sr-only">Ubicación de Miora en Passeig de Gràcia 92, Barcelona</figcaption>
+        </figure>
+
+        <section class="text-center md:justify-self-end md:text-right" aria-labelledby="titulo-newsletter">
+          <h2 id="titulo-newsletter" class="text-xs font-semibold tracking-wide uppercase">Suscríbete a la newsletter</h2>
+          <p class="mt-2 text-sm text-neutral-600">
+            Y llévate un ticket regalo para usar en nuestro showroom
+          </p>
+          <form
+            id="form-newsletter"
+            action="#"
+            class="mt-3 flex w-full max-w-xs flex-col gap-2 md:ml-auto"
+          >
+            <label class="sr-only" for="email-newsletter">Tu email</label>
+            <input
+              id="email-newsletter"
+              type="email"
+              name="email"
+              required
+              placeholder="Tu email"
+              autocomplete="email"
+              class="w-full border border-neutral-300 bg-white px-3 py-1.5 text-sm outline-none focus:border-neutral-800"
+            />
+            <button
+              type="submit"
+              class="bg-neutral-900 px-5 py-2 text-sm font-medium text-white hover:bg-neutral-800"
+            >
+              Suscríbete ahora
+            </button>
+          </form>
+          <p id="gracias-newsletter" class="mt-3 hidden text-xs text-neutral-600" role="status">
+            Gracias. Te avisamos cuando haya novedades.
+          </p>
+        </section>
+      </div>
+    </footer>
+
+    <script>
+      interface LineaCarrito {
+        id: number
+        nombre: string
+        precio: number
+        imagen: string
+        cantidad: number
+      }
+
+      const CLAVE_CESTA = 'miora-carrito'
+
+      function leerCarrito(): LineaCarrito[] {
+        const guardado = localStorage.getItem(CLAVE_CESTA)
+        if (!guardado) {
+          return []
+        }
+        return JSON.parse(guardado) as LineaCarrito[]
+      }
+
+      function contarPrendas(carrito: LineaCarrito[]) {
+        let total = 0
+        for (const linea of carrito) {
+          total += linea.cantidad
+        }
+        return total
+      }
+
+      function pintarCuentaCesta() {
+        const cuenta = document.getElementById('cuenta-cesta')
+        if (!cuenta) {
+          return
+        }
+        cuenta.textContent = String(contarPrendas(leerCarrito()))
+      }
+
+      function alCambiarCarrito() {
+        pintarCuentaCesta()
+      }
+
+      window.addEventListener('miora-carrito-cambio', alCambiarCarrito)
+      pintarCuentaCesta()
+
+      interface Favorito {
+        id: number
+        nombre: string
+        precio: number
+        imagen: string
+      }
+
+      const CLAVE_FAVORITOS = 'miora-favoritos'
+
+      function leerFavoritos(): Favorito[] {
+        const guardado = localStorage.getItem(CLAVE_FAVORITOS)
+        if (!guardado) {
+          return []
+        }
+        return JSON.parse(guardado) as Favorito[]
+      }
+
+      function pintarCuentaFavoritos() {
+        const cuenta = document.getElementById('cuenta-favoritos')
+        if (!cuenta) {
+          return
+        }
+        cuenta.textContent = String(leerFavoritos().length)
+      }
+
+      function alCambiarFavoritos() {
+        pintarCuentaFavoritos()
+      }
+
+      window.addEventListener('miora-favoritos-cambio', alCambiarFavoritos)
+      pintarCuentaFavoritos()
+
+      const btn = document.getElementById('btn-categorias')
+      const panel = document.getElementById('menu-categorias-movil')
+
+      if (btn instanceof HTMLButtonElement && panel instanceof HTMLElement) {
+        const abrir = () => {
+          panel.classList.remove('hidden')
+          panel.setAttribute('aria-hidden', 'false')
+          btn.setAttribute('aria-expanded', 'true')
+          btn.setAttribute('aria-label', 'Cerrar categorías')
+          document.body.style.overflow = 'hidden'
+          const cerrarBtn = panel.querySelector('nav [data-cerrar-categorias]')
+          if (cerrarBtn instanceof HTMLElement) cerrarBtn.focus()
+        }
+
+        const cerrar = () => {
+          if (panel.classList.contains('hidden')) return
+          panel.classList.add('hidden')
+          panel.setAttribute('aria-hidden', 'true')
+          btn.setAttribute('aria-expanded', 'false')
+          btn.setAttribute('aria-label', 'Abrir categorías')
+          document.body.style.overflow = ''
+          btn.focus()
+        }
+
+        btn.addEventListener('click', () => {
+          btn.getAttribute('aria-expanded') === 'true' ? cerrar() : abrir()
+        })
+
+        panel.addEventListener('click', (evento) => {
+          const destino = evento.target
+          if (destino instanceof HTMLElement && destino.closest('[data-cerrar-categorias]')) {
+            cerrar()
+          }
+        })
+
+        document.addEventListener('keydown', (evento) => {
+          if (evento.key === 'Escape') cerrar()
+        })
+      }
+
+      const formNewsletter = document.getElementById('form-newsletter')
+      const graciasNewsletter = document.getElementById('gracias-newsletter')
+
+      if (formNewsletter instanceof HTMLFormElement) {
+        formNewsletter.addEventListener('submit', (evento) => {
+          evento.preventDefault()
+          formNewsletter.reset()
+          if (graciasNewsletter) graciasNewsletter.classList.remove('hidden')
+        })
+      }
+    </script>
+  </body>
+</html>

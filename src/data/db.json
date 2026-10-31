@@ -1,0 +1,55 @@
+{
+  "categorias": [
+    { "slug": "fiesta-gala", "nombre": "Fiesta y gala", "descripcion": "Largos, satén y brillo para noche, boda o graduación." },
+    { "slug": "casual-urbano", "nombre": "Casual urbano", "descripcion": "Algodón, punto y camiseros para el día a día." },
+    { "slug": "playero-verano", "nombre": "Playero y verano", "descripcion": "Lino, florales y tirantes para calor o playa." },
+    { "slug": "oficina", "nombre": "Oficina", "descripcion": "Corte sobrio, lápiz o cruzado, para trabajar." },
+    { "slug": "juvenil", "nombre": "Juvenil", "descripcion": "Minis, cut-out y espalda abierta, más de salida." }
+  ],
+  "productos": [
+    { "id": 1, "categoria": "fiesta-gala", "nombre": "Vestido noche Paloma", "color": "Negro", "precio": 89.95, "descuento": 0, "imagen": "/img/vestidos/fiesta-gala/noche-paloma.jpg", "descripcion": "Terciopelo negro, hombros descubiertos. Para una cena que importa." },
+    { "id": 2, "categoria": "fiesta-gala", "nombre": "Vestido tul Lina", "color": "Rosa palo", "precio": 119.00, "descuento": 10, "imagen": "/img/vestidos/fiesta-gala/sirena-lina.jpg", "descripcion": "Tul rosa palo, volumen de gala. Graduación o boda." },
+    { "id": 3, "categoria": "fiesta-gala", "nombre": "Vestido terciopelo Gala", "color": "Verde botella", "precio": 99.95, "descuento": 0, "imagen": "/img/vestidos/fiesta-gala/saten-gala.jpg", "descripcion": "Terciopelo verde botella, cruzado con lazo." },
+    { "id": 4, "categoria": "fiesta-gala", "nombre": "Vestido brillo Tertulia", "color": "Negro", "precio": 79.95, "descuento": 5, "imagen": "/img/vestidos/fiesta-gala/brillo-tertulia.jpg", "descripcion": "Mini de lentejuela negra, escote en V." },
+    { "id": 5, "categoria": "fiesta-gala", "nombre": "Vestido largo Nochecita", "color": "Oro", "precio": 109.00, "descuento": 0, "imagen": "/img/vestidos/fiesta-gala/largo-nochecita.jpg", "descripcion": "Lentejuela oro, tirantes. Brillo de fiesta." },
+    { "id": 6, "categoria": "fiesta-gala", "nombre": "Vestido fiesta Orilla", "color": "Burdeos", "precio": 94.95, "descuento": 0, "imagen": "/img/vestidos/fiesta-gala/fiesta-orilla.jpg", "descripcion": "Encaje burdeos, largo de gala." },
+    { "id": 31, "categoria": "fiesta-gala", "nombre": "Vestido lentejuela Oro", "color": "Oro", "precio": 84.95, "descuento": 0, "imagen": "/img/vestidos/fiesta-gala/lentejuela-oro.jpg", "descripcion": "Mini oro de lentejuela, tirantes finos." },
+    { "id": 32, "categoria": "fiesta-gala", "nombre": "Vestido perla Nieve", "color": "Marfil", "precio": 114.00, "descuento": 0, "imagen": "/img/vestidos/fiesta-gala/perla-nieve.jpg", "descripcion": "Midi marfil con perlas. Boda de día." },
+
+    { "id": 7, "categoria": "casual-urbano", "nombre": "Vestido camisero Mío", "color": "Denim", "precio": 34.95, "descuento": 0, "imagen": "/img/vestidos/casual-urbano/camisero-mio.jpg", "descripcion": "Camisero denim, cinturón. Lo pongo para casi todo." },
+    { "id": 8, "categoria": "casual-urbano", "nombre": "Vestido midi Hora", "color": "Gris", "precio": 39.95, "descuento": 0, "imagen": "/img/vestidos/casual-urbano/midi-hora.jpg", "descripcion": "Punto canalé gris, midi, se sienta bien." },
+    { "id": 9, "categoria": "casual-urbano", "nombre": "Vestido camiseta Casa", "color": "Marino", "precio": 29.95, "descuento": 0, "imagen": "/img/vestidos/casual-urbano/punto-casa.jpg", "descripcion": "Camiseta marina, corte recto. Metro y recados." },
+    { "id": 10, "categoria": "casual-urbano", "nombre": "Vestido camisero Martes", "color": "Terracota", "precio": 27.95, "descuento": 5, "imagen": "/img/vestidos/casual-urbano/corto-martes.jpg", "descripcion": "Camisero lino terracota, botones. Café y recados." },
+    { "id": 11, "categoria": "casual-urbano", "nombre": "Vestido pichi Callejón", "color": "Beige", "precio": 32.95, "descuento": 0, "imagen": "/img/vestidos/casual-urbano/algodon-callejon.jpg", "descripcion": "Pichi de pana beige, bolsillos. Caminar sin pensar." },
+    { "id": 12, "categoria": "casual-urbano", "nombre": "Vestido lino Paso", "color": "Terracota", "precio": 36.95, "descuento": 0, "imagen": "/img/vestidos/casual-urbano/fluido-paso.jpg", "descripcion": "Lino terracota, cuello camisero. Día caliente." },
+    { "id": 33, "categoria": "casual-urbano", "nombre": "Vestido punto Tostado", "color": "Camel", "precio": 44.95, "descuento": 0, "imagen": "/img/vestidos/casual-urbano/punto-tostado.jpg", "descripcion": "Punto camel, midi, bolsillos." },
+    { "id": 34, "categoria": "casual-urbano", "nombre": "Vestido sahariana Olivo", "color": "Olivo", "precio": 42.95, "descuento": 0, "imagen": "/img/vestidos/casual-urbano/sahariana-olivo.jpg", "descripcion": "Camisero verde olivo, lazo a la cintura." },
+
+    { "id": 13, "categoria": "playero-verano", "nombre": "Vestido rayas Costa", "color": "Rayas navy y blanco", "precio": 42.95, "descuento": 0, "imagen": "/img/vestidos/playero-verano/lino-costa.jpg", "descripcion": "Rayas navy y blanco, corte camiseta. Pueblo y terraza." },
+    { "id": 14, "categoria": "playero-verano", "nombre": "Vestido floral Siesta", "color": "Hibisco rosa", "precio": 38.95, "descuento": 10, "imagen": "/img/vestidos/playero-verano/floral-siesta.jpg", "descripcion": "Wrap de hibisco rosa. Pueblo y terraza." },
+    { "id": 15, "categoria": "playero-verano", "nombre": "Vestido lino Calor", "color": "Amarillo", "precio": 29.95, "descuento": 0, "imagen": "/img/vestidos/playero-verano/tirantes-calor.jpg", "descripcion": "Lino amarillo, tirantes. Se arruga y eso está bien." },
+    { "id": 16, "categoria": "playero-verano", "nombre": "Vestido volantes Sal", "color": "Blanco", "precio": 34.95, "descuento": 0, "imagen": "/img/vestidos/playero-verano/tunica-sal.jpg", "descripcion": "Blanco de volantes, largo. Bikini y chiringuito." },
+    { "id": 17, "categoria": "playero-verano", "nombre": "Vestido volante Arena", "color": "Azul claro", "precio": 27.95, "descuento": 5, "imagen": "/img/vestidos/playero-verano/corto-arena.jpg", "descripcion": "Azul claro, tirantes y volante. Toalla y chanclas." },
+    { "id": 18, "categoria": "playero-verano", "nombre": "Vestido vaporoso Brisa", "color": "Toile azul", "precio": 39.95, "descuento": 0, "imagen": "/img/vestidos/playero-verano/vaporoso-brisa.jpg", "descripcion": "Toile azul de veleros. Se mueve con el aire." },
+    { "id": 35, "categoria": "playero-verano", "nombre": "Vestido hibisco Rojo", "color": "Hibisco rojo", "precio": 38.95, "descuento": 0, "imagen": "/img/vestidos/playero-verano/floral-hibisco.jpg", "descripcion": "Wrap de hibisco rojo y hojas." },
+    { "id": 36, "categoria": "playero-verano", "nombre": "Vestido coral Nido", "color": "Coral", "precio": 36.95, "descuento": 0, "imagen": "/img/vestidos/playero-verano/nido-coral.jpg", "descripcion": "Coral, nido de abeja, manga farol." },
+
+    { "id": 19, "categoria": "oficina", "nombre": "Vestido lápiz Clara", "color": "Gris", "precio": 49.95, "descuento": 0, "imagen": "/img/vestidos/oficina/lapiz-clara.jpg", "descripcion": "Gris punto, hasta la rodilla. Reunión a las diez." },
+    { "id": 20, "categoria": "oficina", "nombre": "Vestido cruzado Junta", "color": "Azul noche", "precio": 54.95, "descuento": 0, "imagen": "/img/vestidos/oficina/cruzado-junta.jpg", "descripcion": "Azul noche, cruzado, no pide chaqueta." },
+    { "id": 21, "categoria": "oficina", "nombre": "Vestido camisero Neutro", "color": "Camel", "precio": 47.95, "descuento": 5, "imagen": "/img/vestidos/oficina/tubo-neutro.jpg", "descripcion": "Camisero camel con cinturón. Presentación." },
+    { "id": 22, "categoria": "oficina", "nombre": "Vestido sastre Firma", "color": "Vainilla", "precio": 59.95, "descuento": 0, "imagen": "/img/vestidos/oficina/sastre-firma.jpg", "descripcion": "Vainilla, manga corta, costura limpia. Entrevista." },
+    { "id": 23, "categoria": "oficina", "nombre": "Vestido midi Acta", "color": "Verde botella", "precio": 44.95, "descuento": 0, "imagen": "/img/vestidos/oficina/midi-acta.jpg", "descripcion": "Verde botella, manga larga, nada de brillo." },
+    { "id": 24, "categoria": "oficina", "nombre": "Vestido manga larga Despacho", "color": "Negro", "precio": 52.95, "descuento": 0, "imagen": "/img/vestidos/oficina/manga-despacho.jpg", "descripcion": "Negro lápiz, manga larga. Aire acondicionado." },
+    { "id": 37, "categoria": "oficina", "nombre": "Vestido camisero Raya", "color": "Gris raya diplomática", "precio": 56.95, "descuento": 0, "imagen": "/img/vestidos/oficina/camisero-raya.jpg", "descripcion": "Camisero gris de raya, cinturón." },
+    { "id": 38, "categoria": "oficina", "nombre": "Vestido largo Gris", "color": "Gris antracita", "precio": 58.95, "descuento": 0, "imagen": "/img/vestidos/oficina/largo-gris.jpg", "descripcion": "Largo gris, manga larga, bolsillos." },
+
+    { "id": 25, "categoria": "juvenil", "nombre": "Vestido mini Corte", "color": "Negro", "precio": 32.95, "descuento": 0, "imagen": "/img/vestidos/juvenil/mini-corte.jpg", "descripcion": "Mini negro, manga de tul. Bar de barrio." },
+    { "id": 26, "categoria": "juvenil", "nombre": "Vestido cut-out Nochebar", "color": "Negro", "precio": 36.95, "descuento": 10, "imagen": "/img/vestidos/juvenil/cutout-nochebar.jpg", "descripcion": "Abertura en la cintura. Para no quedarse en casa." },
+    { "id": 27, "categoria": "juvenil", "nombre": "Vestido satén Ritmo", "color": "Lila", "precio": 34.95, "descuento": 0, "imagen": "/img/vestidos/juvenil/espalda-ritmo.jpg", "descripcion": "Satén lila, tirantes finos." },
+    { "id": 28, "categoria": "juvenil", "nombre": "Vestido ajustado Viernes", "color": "Fucsia", "precio": 29.95, "descuento": 0, "imagen": "/img/vestidos/juvenil/ajustado-viernes.jpg", "descripcion": "Fucsia drapeado, un hombro. Concierto pequeño." },
+    { "id": 29, "categoria": "juvenil", "nombre": "Vestido un hombro Fiesta", "color": "Teja", "precio": 31.95, "descuento": 5, "imagen": "/img/vestidos/juvenil/crop-fiesta.jpg", "descripcion": "Mini teja, un hombro. Salida rápida." },
+    { "id": 30, "categoria": "juvenil", "nombre": "Vestido wrap Banda", "color": "Leopardo", "precio": 33.95, "descuento": 0, "imagen": "/img/vestidos/juvenil/tiro-banda.jpg", "descripcion": "Wrap leopardo, volante corto." },
+    { "id": 39, "categoria": "juvenil", "nombre": "Vestido corsé Cielo", "color": "Azul cielo", "precio": 37.95, "descuento": 0, "imagen": "/img/vestidos/juvenil/corses-cielo.jpg", "descripcion": "Azul cielo, corsé y hombros descubiertos." },
+    { "id": 40, "categoria": "juvenil", "nombre": "Vestido cruzado Rojo", "color": "Rojo geométrico", "precio": 34.95, "descuento": 0, "imagen": "/img/vestidos/juvenil/cruzado-rojo.jpg", "descripcion": "Wrap rojo, negro y blanco. Geométrico." }
+  ]
+}

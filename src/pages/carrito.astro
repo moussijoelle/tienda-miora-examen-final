@@ -1,0 +1,471 @@
+---
+import Tienda from '../layouts/Tienda.astro'
+---
+
+<Tienda titulo="Carrito — Miora">
+  <div class="container mx-auto max-w-4xl px-4 py-8">
+    <h1 class="mb-6 text-center text-2xl font-light text-miora">Tu Cesta de Compras</h1>
+
+    <div id="cesta-vacia" class="hidden py-12 text-center">
+      <p class="mb-4 text-lg text-neutral-500">Tu cesta está vacía.</p>
+      <a
+        href="/"
+        class="bg-neutral-800 px-6 py-2 text-sm text-white transition-colors hover:bg-neutral-700"
+      >
+        Ver productos
+      </a>
+    </div>
+
+    <div id="contenedor-cesta" class="space-y-4"></div>
+
+    <section
+      id="resumen-cesta"
+      class="mt-8 hidden border border-neutral-800 bg-white p-4"
+    >
+      <p class="text-right text-xl font-medium" style="padding-right: 15px">
+        Total: <span id="total-precio" class="ml-2 text-2xl">€0.00</span>
+      </p>
+    </section>
+
+    <section id="pago" class="mt-4 hidden space-y-3">
+      <button
+        type="button"
+        id="btn-pagar"
+        class="block w-full cursor-pointer bg-neutral-800 px-6 py-3 text-center text-sm text-white transition-colors hover:bg-neutral-700"
+      >
+        Efectuar la compra
+      </button>
+      <button
+        type="button"
+        id="btn-vaciar"
+        class="block w-full cursor-pointer border border-neutral-400 px-6 py-3 text-center text-sm text-neutral-800 transition-colors hover:bg-neutral-100"
+      >
+        Vaciar la cesta
+      </button>
+    </section>
+  </div>
+
+  <dialog
+    id="dialogo-confirmar"
+    class="w-full max-w-md border border-neutral-300 bg-white p-0 shadow-lg backdrop:bg-black/40"
+  >
+    <div class="px-6 py-8 text-center">
+      <p id="dialogo-mensaje" class="text-sm text-neutral-700"></p>
+      <div class="mt-8 flex justify-center gap-3">
+        <button
+          type="button"
+          id="dialogo-no"
+          class="border border-neutral-300 px-6 py-2 text-sm hover:bg-neutral-50"
+        >
+          No
+        </button>
+        <button
+          type="button"
+          id="dialogo-si"
+          class="bg-neutral-800 px-6 py-2 text-sm text-white hover:bg-neutral-700"
+        >
+          Sí
+        </button>
+      </div>
+    </div>
+  </dialog>
+</Tienda>
+
+<script>
+  interface LineaCarrito {
+    id: number
+    nombre: string
+    precio: number
+    imagen: string
+    talla: string
+    cantidad: number
+  }
+
+  const CLAVE = 'miora-carrito'
+  const CLAVE_PAGANDO = 'miora-lineas-pagadas'
+
+  const contenedor = document.getElementById('contenedor-cesta')
+  const mensajeVacio = document.getElementById('cesta-vacia')
+  const resumen = document.getElementById('resumen-cesta')
+  const seccionPago = document.getElementById('pago')
+  const totalPrecioEl = document.getElementById('total-precio')
+  const dialogo = document.getElementById('dialogo-confirmar')
+  const dialogoMensaje = document.getElementById('dialogo-mensaje')
+  const dialogoSi = document.getElementById('dialogo-si')
+  const dialogoNo = document.getElementById('dialogo-no')
+
+  /** Claves id|talla desmarcadas (no se pagan) */
+  const noSeleccionados = new Set<string>()
+
+  function claveLinea(id: number, talla: string) {
+    return `${id}|${talla}`
+  }
+
+  function obtenerCesta(): LineaCarrito[] {
+    return JSON.parse(localStorage.getItem(CLAVE) || '[]') as LineaCarrito[]
+  }
+
+  function totalPrendas(cesta: LineaCarrito[]) {
+    let total = 0
+    for (const linea of cesta) {
+      total += linea.cantidad || 1
+    }
+    return total
+  }
+
+  function pintarGlobito(cesta: LineaCarrito[]) {
+    const cuenta = document.getElementById('cuenta-cesta')
+    if (cuenta) {
+      cuenta.textContent = String(totalPrendas(cesta))
+    }
+    window.dispatchEvent(new Event('miora-carrito-cambio'))
+  }
+
+  function guardarCesta(nuevaCesta: LineaCarrito[]) {
+    localStorage.setItem(CLAVE, JSON.stringify(nuevaCesta))
+    pintarGlobito(nuevaCesta)
+    renderizarCesta()
+  }
+
+  function lineasSeleccionadas(): LineaCarrito[] {
+    return obtenerCesta().filter(
+      (linea) => !noSeleccionados.has(claveLinea(Number(linea.id), linea.talla ?? '')),
+    )
+  }
+
+  function actualizarTotal() {
+    let totalAcumulado = 0
+    for (const linea of lineasSeleccionadas()) {
+      totalAcumulado += (Number(linea.precio) || 0) * (linea.cantidad || 1)
+    }
+    if (totalPrecioEl) {
+      totalPrecioEl.textContent = `€ ${totalAcumulado.toFixed(2)}`
+    }
+  }
+
+  function pedirConfirmacion(mensaje: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      if (
+        !(dialogo instanceof HTMLDialogElement) ||
+        !dialogoMensaje ||
+        !dialogoSi ||
+        !dialogoNo
+      ) {
+        resolve(window.confirm(mensaje))
+        return
+      }
+
+      dialogoMensaje.textContent = mensaje
+
+      function limpiar() {
+        dialogoSi?.removeEventListener('click', alSi)
+        dialogoNo?.removeEventListener('click', alNo)
+        dialogo?.removeEventListener('cancel', alCancelar)
+      }
+
+      function alSi() {
+        limpiar()
+        dialogo?.close()
+        resolve(true)
+      }
+
+      function alNo() {
+        limpiar()
+        dialogo?.close()
+        resolve(false)
+      }
+
+      function alCancelar() {
+        limpiar()
+        resolve(false)
+      }
+
+      dialogoSi.addEventListener('click', alSi)
+      dialogoNo.addEventListener('click', alNo)
+      dialogo.addEventListener('cancel', alCancelar)
+      dialogo.showModal()
+    })
+  }
+
+  function cambiarCantidad(idProducto: number, talla: string, cambio: number) {
+    const cesta = obtenerCesta()
+    const index = cesta.findIndex(
+      (item) => Number(item.id) === idProducto && item.talla === talla,
+    )
+
+    if (index === -1) {
+      return
+    }
+
+    cesta[index].cantidad = (cesta[index].cantidad || 1) + cambio
+
+    if (cesta[index].cantidad <= 0) {
+      cesta.splice(index, 1)
+      noSeleccionados.delete(claveLinea(idProducto, talla))
+    }
+
+    guardarCesta(cesta)
+  }
+
+  async function eliminarArticulo(idProducto: number, talla: string) {
+    const seguro = await pedirConfirmacion(
+      '¿Estás segura de que quieres eliminar este artículo?',
+    )
+    if (!seguro) {
+      return
+    }
+
+    noSeleccionados.delete(claveLinea(idProducto, talla))
+    const cesta = obtenerCesta().filter(
+      (item) => !(Number(item.id) === idProducto && item.talla === talla),
+    )
+    guardarCesta(cesta)
+  }
+
+  async function vaciarCesta() {
+    const seguro = await pedirConfirmacion(
+      '¿Estás segura de que quieres vaciar la cesta?',
+    )
+    if (!seguro) {
+      return
+    }
+
+    noSeleccionados.clear()
+    localStorage.removeItem(CLAVE)
+    pintarGlobito([])
+    renderizarCesta()
+  }
+
+  function renderizarCesta() {
+    const cesta = obtenerCesta()
+
+    if (cesta.length === 0) {
+      if (contenedor) contenedor.innerHTML = ''
+      mensajeVacio?.classList.remove('hidden')
+      resumen?.classList.add('hidden')
+      seccionPago?.classList.add('hidden')
+      return
+    }
+
+    mensajeVacio?.classList.add('hidden')
+    resumen?.classList.remove('hidden')
+    seccionPago?.classList.remove('hidden')
+
+    if (contenedor) {
+      contenedor.innerHTML = cesta
+        .map((linea) => {
+          const cantidad = linea.cantidad || 1
+          const precioUnitario = Number(linea.precio) || 0
+          const subtotal = precioUnitario * cantidad
+          const imagenProducto = linea.imagen || '/icons/no-image.png'
+          const clave = claveLinea(Number(linea.id), linea.talla ?? '')
+          const marcado = !noSeleccionados.has(clave)
+
+          return `
+          <div class="flex flex-col gap-4 border-b border-neutral-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex items-center gap-4">
+              <label class="flex cursor-pointer items-center gap-2" title="Incluir en la compra">
+                <input
+                  type="checkbox"
+                  class="check-linea h-4 w-4 accent-neutral-800"
+                  data-id="${linea.id}"
+                  data-talla="${linea.talla ?? ''}"
+                  ${marcado ? 'checked' : ''}
+                />
+                <span class="sr-only">Seleccionar ${linea.nombre}</span>
+              </label>
+              <img
+                width="100"
+                height="100"
+                class="h-24 w-20 object-cover object-top"
+                src="${imagenProducto}"
+                alt="${linea.nombre}"
+              />
+              <div>
+                <h3 class="text-lg font-medium">${linea.nombre}</h3>
+                <p class="text-sm text-neutral-500">Talla ${linea.talla ?? '—'}</p>
+                <p class="text-sm text-neutral-500">€${precioUnitario.toFixed(2)} c/u</p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <div class="flex items-center overflow-hidden border border-neutral-200 bg-neutral-100">
+                <button
+                  type="button"
+                  data-id="${linea.id}"
+                  data-talla="${linea.talla ?? ''}"
+                  data-cambio="-1"
+                  class="btn-cantidad cursor-pointer px-3 py-1 font-bold text-neutral-700 hover:bg-neutral-200"
+                  title="Restar uno"
+                >-</button>
+                <span class="min-w-[2.5rem] border-x border-neutral-200 bg-white px-4 py-1 text-center font-semibold">
+                  ${cantidad}
+                </span>
+                <button
+                  type="button"
+                  data-id="${linea.id}"
+                  data-talla="${linea.talla ?? ''}"
+                  data-cambio="1"
+                  class="btn-cantidad cursor-pointer px-3 py-1 font-bold text-neutral-700 hover:bg-neutral-200"
+                  title="Sumar uno"
+                >+</button>
+              </div>
+              <button
+                type="button"
+                data-id="${linea.id}"
+                data-talla="${linea.talla ?? ''}"
+                class="btn-eliminar inline-flex cursor-pointer items-center justify-center text-red-600 hover:text-red-700"
+                title="Eliminar artículo"
+                aria-label="Eliminar artículo"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3m-7 0h8" />
+                </svg>
+              </button>
+            </div>
+
+            <div class="min-w-[5rem] text-right">
+              <p class="text-lg font-medium text-neutral-900">€ ${subtotal.toFixed(2)}</p>
+            </div>
+          </div>
+        `
+        })
+        .join('')
+    }
+
+    actualizarTotal()
+  }
+
+  contenedor?.addEventListener('click', (evento) => {
+    const objetivo = evento.target as HTMLElement
+
+    const botonEliminar = objetivo.closest('.btn-eliminar')
+    if (botonEliminar instanceof HTMLButtonElement) {
+      const idProducto = Number(botonEliminar.dataset.id)
+      const talla = botonEliminar.dataset.talla ?? ''
+      if (Number.isFinite(idProducto)) {
+        void eliminarArticulo(idProducto, talla)
+      }
+      return
+    }
+
+    const boton = objetivo.closest('.btn-cantidad')
+    if (!(boton instanceof HTMLButtonElement)) {
+      return
+    }
+
+    const idProducto = Number(boton.dataset.id)
+    const talla = boton.dataset.talla ?? ''
+    const cambio = Number(boton.dataset.cambio)
+
+    if (!Number.isFinite(idProducto) || !Number.isFinite(cambio)) {
+      return
+    }
+
+    cambiarCantidad(idProducto, talla, cambio)
+  })
+
+  contenedor?.addEventListener('change', (evento) => {
+    const objetivo = evento.target
+    if (!(objetivo instanceof HTMLInputElement) || !objetivo.classList.contains('check-linea')) {
+      return
+    }
+
+    const idProducto = Number(objetivo.dataset.id)
+    const talla = objetivo.dataset.talla ?? ''
+    const clave = claveLinea(idProducto, talla)
+
+    if (objetivo.checked) {
+      noSeleccionados.delete(clave)
+    } else {
+      noSeleccionados.add(clave)
+    }
+
+    actualizarTotal()
+  })
+
+  document.getElementById('btn-vaciar')?.addEventListener('click', () => {
+    void vaciarCesta()
+  })
+
+  renderizarCesta()
+  pintarGlobito(obtenerCesta())
+
+  async function pagarCarrito() {
+    const seleccionadas = lineasSeleccionadas()
+    const btnPagar = document.getElementById('btn-pagar')
+
+    if (!(btnPagar instanceof HTMLButtonElement)) {
+      return
+    }
+
+    if (seleccionadas.length === 0) {
+      alert('Selecciona al menos un artículo para pagar.')
+      return
+    }
+
+    try {
+      btnPagar.textContent = 'Redirigiendo a Stripe...'
+      btnPagar.disabled = true
+
+      const response = await fetch('/api/crear-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: seleccionadas }),
+      })
+
+      const texto = await response.text()
+      let data: { url?: string; error?: string }
+      try {
+        data = JSON.parse(texto) as { url?: string; error?: string }
+      } catch {
+        throw new Error(
+          'El servidor no respondió JSON. Reinicia pnpm dev y vuelve a intentar.',
+        )
+      }
+
+      if (response.status === 401) {
+        sessionStorage.setItem('miora-post-login', '/carrito?pagar=1')
+        window.location.href = '/login?next=/carrito&pagar=1'
+        return
+      }
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al crear la sesión de pago')
+      }
+
+      if (data.url) {
+        sessionStorage.setItem(
+          CLAVE_PAGANDO,
+          JSON.stringify(
+            seleccionadas.map((linea) => ({
+              id: Number(linea.id),
+              talla: linea.talla ?? '',
+            })),
+          ),
+        )
+        window.location.href = data.url
+        return
+      }
+
+      throw new Error('No se recibió la URL de pago de Stripe.')
+    } catch (error) {
+      console.error('Error en el pago:', error)
+      alert(
+        'Hubo un error al procesar el pago: ' +
+          (error instanceof Error ? error.message : 'Error desconocido'),
+      )
+      btnPagar.textContent = 'Efectuar la compra'
+      btnPagar.disabled = false
+    }
+  }
+
+  document.getElementById('btn-pagar')?.addEventListener('click', () => {
+    void pagarCarrito()
+  })
+
+  if (new URLSearchParams(window.location.search).get('pagar') === '1') {
+    history.replaceState({}, '', '/carrito')
+    void pagarCarrito()
+  }
+</script>

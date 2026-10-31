@@ -1,0 +1,17 @@
+---
+import Tienda from '../layouts/Tienda.astro'
+import EnlacesContacto from '../components/EnlacesContacto.astro'
+---
+
+<Tienda titulo="Contactos — Miora">
+  <section class="px-8 py-16 sm:px-12">
+    <h1 class="text-3xl font-light text-miora">Contactos</h1>
+    <p class="mt-4 text-neutral-600">Passeig de Gràcia 92, Barcelona</p>
+    <p class="mt-2 text-neutral-600">
+      <a href="mailto:1moussijoelle@gmail.com" class="hover:opacity-70">1moussijoelle@gmail.com</a>
+    </p>
+    <div class="mt-6 text-miora">
+      <EnlacesContacto />
+    </div>
+  </section>
+</Tienda>

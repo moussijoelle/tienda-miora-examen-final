@@ -1,0 +1,100 @@
+---
+import Tienda from '../layouts/Tienda.astro'
+---
+
+<Tienda titulo="Favoritos — Miora">
+  <section class="mx-auto max-w-2xl px-8 py-10">
+    <h1 class="text-2xl font-light">Favoritos</h1>
+    <p id="mensaje-vacio" class="mt-4 text-neutral-600">Aún no tienes favoritos.</p>
+    <ul id="lista-favoritos" class="mt-8 space-y-6"></ul>
+    <button type="button" id="btn-vaciar-favoritos" hidden class="mt-8 text-sm underline underline-offset-4 hover:opacity-70">
+      Vaciar favoritos
+    </button>
+  </section>
+</Tienda>
+
+<script>
+  const CLAVE = 'miora-favoritos'
+
+  interface Favorito {
+    id: number
+    nombre: string
+    precio: number
+    imagen: string
+  }
+
+  function leerFavoritos(): Favorito[] {
+    const guardado = localStorage.getItem(CLAVE)
+    if (!guardado) {
+      return []
+    }
+    return JSON.parse(guardado) as Favorito[]
+  }
+
+  function pintarLinea(linea: Favorito) {
+    const item = document.createElement('li')
+    item.className = 'flex gap-4'
+
+    const enlace = document.createElement('a')
+    enlace.href = '/producto/' + linea.id
+    enlace.className = 'flex gap-4'
+
+    const foto = document.createElement('img')
+    foto.src = linea.imagen
+    foto.alt = linea.nombre
+    foto.className = 'h-28 w-20 bg-neutral-100 object-cover object-top'
+
+    const datos = document.createElement('div')
+
+    const nombre = document.createElement('p')
+    nombre.className = 'text-sm font-medium'
+    nombre.textContent = linea.nombre
+
+    const precio = document.createElement('p')
+    precio.className = 'mt-1 text-sm'
+    precio.textContent = linea.precio.toFixed(2).replace('.', ',') + ' €'
+
+    datos.append(nombre, precio)
+    enlace.append(foto, datos)
+    item.append(enlace)
+    return item
+  }
+
+  function avisarCambioFavoritos() {
+    window.dispatchEvent(new Event('miora-favoritos-cambio'))
+  }
+
+  function vaciarFavoritos() {
+    localStorage.removeItem(CLAVE)
+    avisarCambioFavoritos()
+    pintarFavoritos()
+  }
+
+  function pintarFavoritos() {
+    const favoritos = leerFavoritos()
+    const lista = document.getElementById('lista-favoritos')
+    const vacio = document.getElementById('mensaje-vacio')
+    const vaciar = document.getElementById('btn-vaciar-favoritos')
+
+    if (!lista || !vacio || !vaciar) {
+      return
+    }
+
+    lista.replaceChildren()
+
+    if (favoritos.length === 0) {
+      vacio.hidden = false
+      vaciar.hidden = true
+      return
+    }
+
+    vacio.hidden = true
+    vaciar.hidden = false
+    for (const linea of favoritos) {
+      lista.appendChild(pintarLinea(linea))
+    }
+  }
+
+  document.getElementById('btn-vaciar-favoritos')?.addEventListener('click', vaciarFavoritos)
+  pintarFavoritos()
+</script>

@@ -1,0 +1,245 @@
+---
+import Tienda from '../../layouts/Tienda.astro'
+import { getProductoById, type Producto } from '../../lib/productos'
+
+const id = Number(Astro.params.id)
+const producto: Producto | null = Number.isFinite(id) ? await getProductoById(id) : null
+
+if (!producto) {
+  return Astro.redirect('/')
+}
+
+const precioFinal =
+  producto.descuento > 0
+    ? Number(producto.precio) * (1 - Number(producto.descuento) / 100)
+    : Number(producto.precio)
+---
+
+<Tienda titulo={`${producto.nombre_producto} — Miora`}>
+  <article class="mx-auto grid max-w-5xl gap-10 px-8 py-10 md:grid-cols-2">
+    <figure class="overflow-hidden bg-neutral-100">
+      {producto.url_imagen && (
+        <img
+          src={producto.url_imagen}
+          alt={producto.nombre_producto}
+          class="w-full object-cover object-top"
+        />
+      )}
+    </figure>
+    <div>
+      <p class="text-sm text-neutral-500">Referencia: {producto.pk_producto}</p>
+      <h1 class="mt-2 text-3xl font-light">{producto.nombre_producto}</h1>
+      {producto.descuento > 0 ? (
+        <p class="mt-4 text-2xl">
+          <span class="text-neutral-400 line-through text-lg">
+            {Number(producto.precio).toFixed(2).replace('.', ',')} €
+          </span>
+          <span class="ml-2 text-red-600">{precioFinal.toFixed(2).replace('.', ',')} €</span>
+        </p>
+      ) : (
+        <p class="mt-4 text-2xl">{Number(producto.precio).toFixed(2).replace('.', ',')} €</p>
+      )}
+      <p class="mt-2 text-sm text-neutral-500">IVA incluido</p>
+      <p class="mt-6 text-sm text-neutral-600">{producto.descripcion_producto}</p>
+
+      <fieldset class="mt-6">
+        <legend class="text-sm text-neutral-600">Talla</legend>
+        <div class="mt-2 flex flex-wrap gap-2">
+          <label class="cursor-pointer border border-neutral-300 px-3 py-1.5 text-sm has-checked:border-neutral-800 has-checked:bg-neutral-800 has-checked:text-white">
+            <input type="radio" name="talla" value="S" class="sr-only" />
+            S
+          </label>
+          <label class="cursor-pointer border border-neutral-300 px-3 py-1.5 text-sm has-checked:border-neutral-800 has-checked:bg-neutral-800 has-checked:text-white">
+            <input type="radio" name="talla" value="M" class="sr-only" />
+            M
+          </label>
+          <label class="cursor-pointer border border-neutral-300 px-3 py-1.5 text-sm has-checked:border-neutral-800 has-checked:bg-neutral-800 has-checked:text-white">
+            <input type="radio" name="talla" value="L" class="sr-only" />
+            L
+          </label>
+          <label class="cursor-pointer border border-neutral-300 px-3 py-1.5 text-sm has-checked:border-neutral-800 has-checked:bg-neutral-800 has-checked:text-white">
+            <input type="radio" name="talla" value="XL" class="sr-only" />
+            XL
+          </label>
+        </div>
+        <p id="aviso-talla" class="mt-2 hidden text-sm text-red-600" role="alert">
+          Elige una talla antes de añadir a la cesta.
+        </p>
+      </fieldset>
+
+      <div class="mt-6 flex items-center gap-3">
+        <span class="text-sm font-medium">Cantidad:</span>
+        <div class="flex items-center overflow-hidden border border-neutral-200 bg-neutral-100">
+          <button
+            type="button"
+            id="btn-cantidad-menos"
+            class="cursor-pointer px-3 py-1 font-bold text-neutral-700 hover:bg-neutral-200"
+            title="Restar uno"
+          >
+            -
+          </button>
+          <span
+            id="cantidad-valor"
+            class="min-w-[2.5rem] border-x border-neutral-200 bg-white px-4 py-1 text-center font-semibold"
+          >
+            1
+          </span>
+          <button
+            type="button"
+            id="btn-cantidad-mas"
+            class="cursor-pointer px-3 py-1 font-bold text-neutral-700 hover:bg-neutral-200"
+            title="Sumar uno"
+          >
+            +
+          </button>
+        </div>
+      </div>
+
+      <div class="mt-8 flex flex-col gap-3 sm:max-w-xs">
+        <button type="button" id="btn-anadir" class="bg-neutral-800 px-8 py-3 text-sm text-white hover:bg-neutral-700">
+          Añadir a la cesta
+        </button>
+        <a
+          href="/carrito"
+          class="border border-neutral-800 px-8 py-3 text-center text-sm hover:bg-neutral-100"
+        >
+          Ver cesta y pagar
+        </a>
+        <button type="button" id="btn-favorito" class="border border-neutral-300 px-8 py-3 text-sm hover:bg-neutral-50">
+          Añadir a favoritos
+        </button>
+      </div>
+    </div>
+  </article>
+
+  <div
+    id="toast-anadido"
+    class="pointer-events-none fixed bottom-6 left-1/2 z-50 hidden w-[min(90vw,24rem)] -translate-x-1/2 border border-neutral-200 bg-white px-5 py-4 text-center shadow-lg"
+    role="status"
+    aria-live="polite"
+  >
+    <p class="text-sm font-medium text-miora">Añadido a la cesta</p>
+  </div>
+</Tienda>
+
+<script
+  define:vars={{
+    id: producto.pk_producto,
+    nombre: producto.nombre_producto,
+    precio: precioFinal,
+    imagen: producto.url_imagen ?? '',
+  }}
+>
+  const CLAVE = 'miora-carrito'
+  const CLAVE_FAVORITOS = 'miora-favoritos'
+  const cantidadEl = document.getElementById('cantidad-valor')
+  const avisoTalla = document.getElementById('aviso-talla')
+  const toastAnadido = document.getElementById('toast-anadido')
+  let toastTimer = 0
+
+  function mostrarToastAnadido() {
+    if (!toastAnadido) {
+      return
+    }
+    toastAnadido.classList.remove('hidden')
+    window.clearTimeout(toastTimer)
+    toastTimer = window.setTimeout(() => {
+      toastAnadido.classList.add('hidden')
+    }, 2800)
+  }
+
+  function leerCantidad() {
+    const n = Number(cantidadEl?.textContent ?? '1')
+    return Number.isFinite(n) && n > 0 ? n : 1
+  }
+
+  function pintarCantidad(valor) {
+    if (cantidadEl) {
+      cantidadEl.textContent = String(valor)
+    }
+  }
+
+  function tallaElegida() {
+    const marcada = document.querySelector('input[name="talla"]:checked')
+    if (!(marcada instanceof HTMLInputElement)) {
+      return ''
+    }
+    return marcada.value
+  }
+
+  function anadirALaCesta() {
+    const talla = tallaElegida()
+    if (!talla) {
+      avisoTalla?.classList.remove('hidden')
+      return
+    }
+    avisoTalla?.classList.add('hidden')
+
+    const unidades = leerCantidad()
+
+    function esMismaLinea(linea) {
+      return linea.id === id && linea.talla === talla
+    }
+
+    const guardado = localStorage.getItem(CLAVE)
+    const carrito = guardado ? JSON.parse(guardado) : []
+
+    const yaEsta = carrito.find(esMismaLinea)
+    if (yaEsta) {
+      yaEsta.cantidad += unidades
+    } else {
+      carrito.push({ id, nombre, precio, imagen, talla, cantidad: unidades })
+    }
+
+    localStorage.setItem(CLAVE, JSON.stringify(carrito))
+    avisarCambioCesta()
+    mostrarToastAnadido()
+  }
+
+  function avisarCambioCesta() {
+    window.dispatchEvent(new Event('miora-carrito-cambio'))
+  }
+
+  function esEsteFavorito(linea) {
+    return linea.id === id
+  }
+
+  function avisarCambioFavoritos() {
+    window.dispatchEvent(new Event('miora-favoritos-cambio'))
+  }
+
+  function anadirAFavoritos() {
+    const guardado = localStorage.getItem(CLAVE_FAVORITOS)
+    const favoritos = guardado ? JSON.parse(guardado) : []
+
+    if (favoritos.find(esEsteFavorito)) {
+      alert('Ya está en favoritos')
+      return
+    }
+
+    favoritos.push({ id, nombre, precio, imagen })
+    localStorage.setItem(CLAVE_FAVORITOS, JSON.stringify(favoritos))
+    avisarCambioFavoritos()
+    alert('Añadido a favoritos')
+  }
+
+  document.getElementById('btn-cantidad-menos')?.addEventListener('click', () => {
+    const actual = leerCantidad()
+    if (actual > 1) {
+      pintarCantidad(actual - 1)
+    }
+  })
+
+  document.getElementById('btn-cantidad-mas')?.addEventListener('click', () => {
+    pintarCantidad(leerCantidad() + 1)
+  })
+
+  document.querySelectorAll('input[name="talla"]').forEach((input) => {
+    input.addEventListener('change', () => {
+      avisoTalla?.classList.add('hidden')
+    })
+  })
+
+  document.getElementById('btn-anadir')?.addEventListener('click', anadirALaCesta)
+  document.getElementById('btn-favorito')?.addEventListener('click', anadirAFavoritos)
+</script>

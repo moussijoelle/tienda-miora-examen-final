@@ -1,0 +1,46 @@
+---
+import Tienda from '../layouts/Tienda.astro'
+import { buscarProductos, type Producto } from '../lib/productos'
+
+const q = Astro.url.searchParams.get('q')?.trim() ?? ''
+const productos: Producto[] = q !== '' ? await buscarProductos(q) : []
+---
+
+<Tienda titulo={q ? `Buscar: ${q} — Miora` : 'Buscar — Miora'}>
+  <section class="mx-auto max-w-6xl px-8 py-10">
+    {q === '' ? (
+      <p class="text-neutral-600">Escribe algo para buscar vestidos.</p>
+    ) : productos.length === 0 ? (
+      <>
+        <h1 class="text-3xl font-light">Sin resultados</h1>
+        <p class="mt-4 text-neutral-600">No hay vestidos para «{q}».</p>
+      </>
+    ) : (
+      <>
+        <h1 class="text-3xl font-light">Resultados</h1>
+        <p class="mt-2 text-sm text-neutral-500">
+          {productos.length} prendas para «{q}»
+        </p>
+        <ul class="mt-8 grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-5">
+          {productos.map((p) => (
+            <li>
+              <a href={`/producto/${p.pk_producto}`} class="block">
+                <div class="aspect-3/4 overflow-hidden bg-neutral-100">
+                  {p.url_imagen && (
+                    <img
+                      src={p.url_imagen}
+                      alt={p.nombre_producto}
+                      class="h-full w-full object-cover object-top"
+                    />
+                  )}
+                </div>
+                <h2 class="mt-3 text-sm font-medium">{p.nombre_producto}</h2>
+                <p class="mt-1 text-sm">{Number(p.precio).toFixed(2).replace('.', ',')} €</p>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </>
+    )}
+  </section>
+</Tienda>

@@ -1,0 +1,162 @@
+---
+import Tienda from '../layouts/Tienda.astro'
+import Stripe from 'stripe'
+import pool from '../lib/db'
+import { crearFactura } from '../lib/facturas'
+
+export const prerender = false
+
+const sessionId = Astro.url.searchParams.get('session_id')
+
+let pagoExitoso = false
+let errorMessage = ''
+
+if (!sessionId) {
+  errorMessage = 'No se encontró una sesión de pago válida.'
+} else {
+  try {
+    const apiKey = import.meta.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY
+    if (!apiKey) {
+      throw new Error('Falta STRIPE_SECRET_KEY en el archivo .env')
+    }
+    const stripe = new Stripe(apiKey)
+    const session = await stripe.checkout.sessions.retrieve(sessionId)
+
+    if (session.payment_status === 'paid') {
+      const clienteId = session.metadata?.userId
+      const cartRaw = session.metadata?.cart
+
+      const paymentIntentId =
+        typeof session.payment_intent === 'string'
+          ? session.payment_intent
+          : session.payment_intent?.id
+
+      if (clienteId && paymentIntentId && cartRaw) {
+        const yaExiste = await pool.query(
+          `SELECT pk_factura FROM facturas WHERE stripe_payment_intent_id = $1`,
+          [paymentIntentId],
+        )
+
+        if (yaExiste.rows.length > 0) {
+          pagoExitoso = true
+        } else {
+          const lineasCart = JSON.parse(cartRaw) as {
+            id: number
+            cantidad: number
+            precio: number
+          }[]
+
+          const factura = await crearFactura({
+            fkCliente: clienteId,
+            stripePaymentIntentId: paymentIntentId,
+            iva: 21,
+            lineas: lineasCart.map((linea) => ({
+              fkProducto: linea.id,
+              cantidad: linea.cantidad,
+              precioUnitario: linea.precio,
+              descuento: 0,
+              iva: 21,
+            })),
+          })
+
+          if (factura) {
+            pagoExitoso = true
+          } else {
+            errorMessage = 'El pago está bien, pero no se pudo guardar la factura.'
+          }
+        }
+      } else {
+        errorMessage = 'Faltan datos del cliente, del carrito o del pago de Stripe.'
+      }
+    } else {
+      errorMessage = 'El pago no se ha completado correctamente.'
+    }
+  } catch (error) {
+    console.error('Error al procesar el éxito del pago:', error)
+    errorMessage = 'Hubo un error al verificar la sesión de pago.'
+  }
+}
+---
+
+<Tienda titulo="Compra — Miora">
+  <div class="container mx-auto max-w-xl px-4 py-16 text-center">
+    {
+      pagoExitoso ? (
+        <div class="border border-neutral-200 bg-white p-8">
+          <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-2xl text-green-600">
+            ✓
+          </div>
+          <h1 class="mb-2 text-3xl font-light text-miora">¡Compra exitosa!</h1>
+          <p class="mb-6 text-neutral-600">
+            Muchas gracias por tu compra. Tu pedido se ha registrado correctamente.
+          </p>
+          <a
+            href="/"
+            class="inline-block bg-neutral-800 px-6 py-3 text-sm text-white hover:bg-neutral-700"
+          >
+            Volver al inicio
+          </a>
+        </div>
+      ) : (
+        <div class="border border-neutral-200 bg-white p-8">
+          <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 text-2xl text-red-600">
+            ✕
+          </div>
+          <h1 class="mb-2 text-3xl font-light text-miora">Algo salió mal</h1>
+          <p class="mb-6 text-neutral-600">{errorMessage}</p>
+          <a
+            href="/carrito"
+            class="inline-block bg-neutral-800 px-6 py-3 text-sm text-white hover:bg-neutral-700"
+          >
+            Volver al carrito
+          </a>
+        </div>
+      )
+    }
+  </div>
+</Tienda>
+
+<script define:vars={{ pagoExitoso }}>
+  if (pagoExitoso) {
+    const CLAVE = 'miora-carrito'
+    const CLAVE_PAGANDO = 'miora-lineas-pagadas'
+    const pagadasRaw = sessionStorage.getItem(CLAVE_PAGANDO)
+    const pagadas = pagadasRaw
+      ? (JSON.parse(pagadasRaw) as { id: number; talla: string }[])
+      : []
+
+    if (pagadas.length > 0) {
+      const cesta = JSON.parse(localStorage.getItem(CLAVE) || '[]') as {
+        id: number
+        talla: string
+        cantidad: number
+      }[]
+      const resto = cesta.filter(
+        (linea) =>
+          !pagadas.some(
+            (p) => Number(p.id) === Number(linea.id) && p.talla === (linea.talla ?? ''),
+          ),
+      )
+      if (resto.length > 0) {
+        localStorage.setItem(CLAVE, JSON.stringify(resto))
+      } else {
+        localStorage.removeItem(CLAVE)
+      }
+      sessionStorage.removeItem(CLAVE_PAGANDO)
+    } else {
+      localStorage.removeItem(CLAVE)
+    }
+
+    window.dispatchEvent(new Event('miora-carrito-cambio'))
+    const cuenta = document.getElementById('cuenta-cesta')
+    if (cuenta) {
+      const guardado = localStorage.getItem(CLAVE)
+      const cesta = guardado ? JSON.parse(guardado) : []
+      let total = 0
+      for (const linea of cesta) {
+        total += linea.cantidad || 1
+      }
+      cuenta.textContent = String(total)
+    }
+  }
+</script>

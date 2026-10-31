@@ -1,0 +1,75 @@
+---
+import Tienda from '../layouts/Tienda.astro'
+import { supabase } from '../lib/supabase'
+import { getClienteById } from '../lib/clientes'
+
+const accessToken = Astro.cookies.get('sb-access-token')
+const refreshToken = Astro.cookies.get('sb-refresh-token')
+
+let email = ''
+let nombre = ''
+let telefono = ''
+
+if (!accessToken || !refreshToken) {
+  return Astro.redirect('/login')
+}
+
+const { data } = await supabase.auth.setSession({
+  access_token: accessToken.value,
+  refresh_token: refreshToken.value,
+})
+
+if (!data.user) {
+  return Astro.redirect('/login')
+}
+
+email = data.user.email ?? ''
+const cliente = await getClienteById(data.user.id)
+
+if (cliente) {
+  nombre = [cliente.nombres_cliente, cliente.apellido1_cliente, cliente.apellido2_cliente]
+    .filter(Boolean)
+    .join(' ')
+  telefono = cliente.telefono_movil ?? ''
+} else {
+  nombre =
+    data.user.user_metadata?.full_name ||
+    data.user.user_metadata?.nombre ||
+    ''
+}
+---
+
+<Tienda titulo="Perfil — Miora">
+  <main class="mx-auto max-w-md px-4 py-16">
+    <h1 class="text-center text-2xl font-light text-miora">Mi perfil</h1>
+    <p class="mt-2 text-center text-sm text-neutral-500">{email}</p>
+
+    <form action="/api/clientes/crear" method="POST" class="mt-8 flex flex-col gap-4">
+      <label class="block text-sm text-neutral-600">
+        Nombre Completo:
+        <input
+          type="text"
+          name="nombre"
+          required
+          value={nombre}
+          class="mt-1 w-full border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-800"
+        />
+      </label>
+      <label class="block text-sm text-neutral-600">
+        Teléfono:
+        <input
+          type="tel"
+          name="telefono"
+          value={telefono}
+          class="mt-1 w-full border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-800"
+        />
+      </label>
+      <input type="hidden" name="email" value={email} />
+      <input type="hidden" name="enviar-brevo" value="true" />
+
+      <button type="submit" class="bg-neutral-800 px-8 py-3 text-sm text-white hover:bg-neutral-700">
+        Guardar Registro
+      </button>
+    </form>
+  </main>
+</Tienda>
