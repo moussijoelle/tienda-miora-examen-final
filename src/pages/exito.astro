@@ -128,47 +128,76 @@ if (!sessionId) {
   </div>
 </Tienda>
 
-<script define:vars={{ pagoExitoso }}>
-  if (pagoExitoso) {
+<script is:inline define:vars={{ pagoExitoso }}>
+  ;(function vaciarCestaTrasPago() {
+    if (!pagoExitoso) return
+
     const CLAVE = 'miora-carrito'
     const CLAVE_PAGANDO = 'miora-lineas-pagadas'
-    const pagadasRaw = sessionStorage.getItem(CLAVE_PAGANDO)
-    const pagadas = pagadasRaw
-      ? (JSON.parse(pagadasRaw) as { id: number; talla: string }[])
-      : []
 
-    if (pagadas.length > 0) {
-      const cesta = JSON.parse(localStorage.getItem(CLAVE) || '[]') as {
-        id: number
-        talla: string
-        cantidad: number
-      }[]
-      const resto = cesta.filter(
-        (linea) =>
-          !pagadas.some(
-            (p) => Number(p.id) === Number(linea.id) && p.talla === (linea.talla ?? ''),
-          ),
-      )
-      if (resto.length > 0) {
-        localStorage.setItem(CLAVE, JSON.stringify(resto))
-      } else {
-        localStorage.removeItem(CLAVE)
-      }
-      sessionStorage.removeItem(CLAVE_PAGANDO)
-    } else {
-      localStorage.removeItem(CLAVE)
-    }
-
-    window.dispatchEvent(new Event('miora-carrito-cambio'))
-    const cuenta = document.getElementById('cuenta-cesta')
-    if (cuenta) {
-      const guardado = localStorage.getItem(CLAVE)
-      const cesta = guardado ? JSON.parse(guardado) : []
+    function pintarGlobito() {
+      const cuenta = document.getElementById('cuenta-cesta')
+      if (!cuenta) return
       let total = 0
-      for (const linea of cesta) {
-        total += linea.cantidad || 1
+      try {
+        const cesta = JSON.parse(localStorage.getItem(CLAVE) || '[]')
+        for (const linea of cesta) {
+          total += Number(linea.cantidad) || 1
+        }
+      } catch {
+        total = 0
       }
       cuenta.textContent = String(total)
+      window.dispatchEvent(new Event('miora-carrito-cambio'))
     }
-  }
+
+    try {
+      const pagadasRaw =
+        localStorage.getItem(CLAVE_PAGANDO) ||
+        sessionStorage.getItem(CLAVE_PAGANDO)
+
+      let pagadas = []
+      try {
+        pagadas = pagadasRaw ? JSON.parse(pagadasRaw) : []
+      } catch {
+        pagadas = []
+      }
+
+      if (Array.isArray(pagadas) && pagadas.length > 0) {
+        let cesta = []
+        try {
+          cesta = JSON.parse(localStorage.getItem(CLAVE) || '[]')
+        } catch {
+          cesta = []
+        }
+
+        const resto = cesta.filter(function (linea) {
+          const id = Number(linea.id)
+          const talla = String(linea.talla ?? '')
+          return !pagadas.some(function (p) {
+            return Number(p.id) === id && String(p.talla ?? '') === talla
+          })
+        })
+
+        if (resto.length > 0) {
+          localStorage.setItem(CLAVE, JSON.stringify(resto))
+        } else {
+          localStorage.removeItem(CLAVE)
+        }
+      } else {
+        // Sin lista de líneas: vaciar toda la cesta tras pago OK
+        localStorage.removeItem(CLAVE)
+      }
+    } catch (e) {
+      console.error('No se pudo vaciar la cesta tras el pago:', e)
+      localStorage.removeItem(CLAVE)
+    } finally {
+      localStorage.removeItem(CLAVE_PAGANDO)
+      sessionStorage.removeItem(CLAVE_PAGANDO)
+      pintarGlobito()
+      // Por si el layout pinta el globito después de este script
+      setTimeout(pintarGlobito, 0)
+      setTimeout(pintarGlobito, 100)
+    }
+  })()
 </script>

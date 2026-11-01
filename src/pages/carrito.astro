@@ -435,15 +435,15 @@ import Tienda from '../layouts/Tienda.astro'
       }
 
       if (data.url) {
-        sessionStorage.setItem(
-          CLAVE_PAGANDO,
-          JSON.stringify(
-            seleccionadas.map((linea) => ({
-              id: Number(linea.id),
-              talla: linea.talla ?? '',
-            })),
-          ),
+        const pagadas = JSON.stringify(
+          seleccionadas.map((linea) => ({
+            id: Number(linea.id),
+            talla: String(linea.talla ?? ''),
+          })),
         )
+        // localStorage sobrevive el salto a Stripe; sessionStorage a veces no
+        localStorage.setItem(CLAVE_PAGANDO, pagadas)
+        sessionStorage.setItem(CLAVE_PAGANDO, pagadas)
         window.location.href = data.url
         return
       }
