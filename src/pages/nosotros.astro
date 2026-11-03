@@ -3,10 +3,49 @@ import Tienda from '../layouts/Tienda.astro'
 ---
 
 <Tienda titulo="Nosotros — Miora">
-  <section class="px-8 py-16 sm:px-12">
+  <section class="mx-auto max-w-4xl px-8 py-12 sm:px-12">
     <h1 class="text-3xl font-light text-miora">Nosotros</h1>
-    <p class="mt-4 max-w-lg text-neutral-600">
-      Miora es mi hora: vestidos de mujer, fuertes y sencillos. Fiesta, calle, playa, oficina y algo más joven.
-    </p>
+    <p class="mt-2 text-sm tracking-wide text-neutral-500">Quiénes somos</p>
+
+    <figure class="mt-8 overflow-hidden bg-neutral-100">
+      <img
+        src="/somos.jpg"
+        alt="Espacio y vestidos Miora"
+        class="block h-auto w-full object-cover object-center"
+      />
+    </figure>
+
+    <div class="mt-10 max-w-2xl space-y-5 text-neutral-600 leading-relaxed">
+      <p>
+        <strong class="font-medium text-neutral-800"
+          >Miora nació de una idea sencilla: que cada mujer tenga su momento.</strong
+        >
+        El nombre une «mi» y «hora»: el instante en el que te reconoces en lo que
+        llevas puesto — no para impresionar a nadie, sino para sentirte alineada
+        contigo misma.
+      </p>
+      <p>
+        Empezamos como una casa de
+        <strong class="font-medium text-neutral-800">vestidos de mujer</strong>,
+        con un catálogo claro por estilos: fiesta y gala, casual urbano, playero,
+        oficina y juvenil. No perseguimos tendencias que duran una semana;
+        buscamos piezas con presencia, corte limpio y una estética cálida,
+        cercana y contemporánea.
+      </p>
+      <p>
+        <strong class="font-medium text-neutral-800">Nuestro objetivo</strong> es
+        acompañarte en los días importantes y en los cotidianos: una cena, una
+        entrevista, un viaje, una tarde en la ciudad. Queremos que elegir un
+        vestido en Miora sea fácil, honesto y agradable — con precios
+        transparentes, tallas claras y una experiencia de compra cuidada, online
+        y con el espíritu de un showroom en Barcelona.
+      </p>
+      <p>
+        En Miora creemos que la ropa no grita:
+        <strong class="font-medium text-neutral-800">acompaña</strong>. Por eso
+        diseñamos la tienda como un espacio sereno, donde la prenda y tú sois el
+        centro.
+      </p>
+    </div>
   </section>
 </Tienda>

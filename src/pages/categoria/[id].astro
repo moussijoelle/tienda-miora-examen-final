@@ -10,7 +10,16 @@ if (!categoria) {
   return Astro.redirect('/')
 }
 
-const productos: Producto[] = await getProductosByCategoria(categoria.pk_categoria)
+const lista: Producto[] = await getProductosByCategoria(categoria.pk_categoria)
+const productos = lista.map((p) => {
+  const precio = Number(p.precio)
+  const descuento = Number(p.descuento)
+  const precioFinal =
+    descuento > 0
+      ? Number((precio * (1 - descuento / 100)).toFixed(2))
+      : precio
+  return { ...p, precio, descuento, precioFinal }
+})
 ---
 
 <Tienda titulo={`${categoria.nom_categoria} — Miora`}>
@@ -33,7 +42,21 @@ const productos: Producto[] = await getProductosByCategoria(categoria.pk_categor
               )}
             </figure>
             <h2 class="mt-3 text-sm font-medium">{p.nombre_producto}</h2>
-            <p class="mt-1 text-sm">{Number(p.precio).toFixed(2).replace('.', ',')} €</p>
+            {p.descuento > 0 ? (
+              <>
+                <p class="mt-1 text-xs text-neutral-400">-{p.descuento}%</p>
+                <p class="mt-1 text-sm">
+                  <span class="text-neutral-400 line-through">
+                    {p.precio.toFixed(2).replace('.', ',')} €
+                  </span>
+                  <span class="ml-2 text-red-600">
+                    {p.precioFinal.toFixed(2).replace('.', ',')} €
+                  </span>
+                </p>
+              </>
+            ) : (
+              <p class="mt-1 text-sm">{p.precio.toFixed(2).replace('.', ',')} €</p>
+            )}
           </a>
         </li>
       ))}
